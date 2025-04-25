@@ -2,7 +2,7 @@ import psutil
 import time
 from functools import reduce
 import os
-import requests
+import httpx
 
 # Penampungan
 cpu_percents: list[float] = []
@@ -40,8 +40,8 @@ final_memory_percent = round(reduce((lambda a, b: a + b), memory_percents) / len
 final_disk_percent = psutil.disk_usage(os.environ.get("DISK_PATH")).percent
 
 # Simpan ke database
-try:
-  requests.post(
+with httpx.Client() as client:
+  client.post(
     os.environ.get("API_URL") + "/server-usage",
     data = {
       "machine": os.environ.get("MACHINE_ID"),
@@ -52,7 +52,5 @@ try:
     headers = {
       "machine": os.environ.get("MACHINE_ID"),
       "token": os.environ.get("TOKEN")
-    }
+    },
   )
-except Exception as e:
-  print(e)
