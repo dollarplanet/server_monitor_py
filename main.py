@@ -1,8 +1,8 @@
 import psutil
 import time
 from functools import reduce
-from supabase import create_client, Client
 import os
+import requests
 
 # Penampungan
 cpu_percents: list[float] = []
@@ -41,16 +41,18 @@ final_disk_percent = psutil.disk_usage(os.environ.get("DISK_PATH")).percent
 
 # Simpan ke database
 try:
-  url: str = os.environ.get("SUPABASE_URL")
-  key: str = os.environ.get("SUPABASE_KEY")
-  serverId: str = os.environ.get("SERVER_ID")
-  supabase: Client = create_client(url, key)
-
-  supabase.table("usage").insert({
-    "serverId": serverId,
-    "cpu": final_cpu_percent,
-    "memory": final_memory_percent,
-    "disk": final_disk_percent
-  }).execute()
-except:
-  print("Error")
+  requests.post(
+    os.environ.get("API_URL") + "/server-usage",
+    data = {
+      "machine": os.environ.get("MACHINE_ID"),
+      "cpu": final_cpu_percent,
+      "memory": final_memory_percent,
+      "disk": final_disk_percent
+    },
+    headers = {
+      "machine": os.environ.get("MACHINE_ID"),
+      "token": os.environ.get("TOKEN")
+    }
+  )
+except Exception as e:
+  print(e)
